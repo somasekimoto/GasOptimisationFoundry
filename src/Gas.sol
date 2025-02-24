@@ -136,7 +136,20 @@ contract GasContract {
     }
 
     function getPaymentStatus(address sender) public view returns (bool, uint256) {
-        ImportantStruct memory userStruct = whiteListStruct[sender];
-        return (userStruct.paymentStatus, userStruct.amount);
+        assembly {
+            // Calculate storage slot for whiteListStruct[sender]
+            mstore(0x00, sender)
+            mstore(0x20, whiteListStruct.slot)
+            let structSlot := keccak256(0x00, 0x40)
+
+            // Load amount and paymentStatus
+            let amount := sload(structSlot)
+            let paymentStatus := sload(add(structSlot, 1))
+
+            // Return the values
+            mstore(0x00, paymentStatus)
+            mstore(0x20, amount)
+            return(0x00, 0x40)
+        }
     }
 }
