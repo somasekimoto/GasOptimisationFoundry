@@ -77,6 +77,7 @@ contract GasContract {
     }
 
     function getPaymentStatus(address sender) public view returns (bool, uint256) {
-        return (whiteListStruct[sender].paymentStatus, whiteListStruct[sender].amount);
+        ImportantStruct memory userStruct = whiteListStruct[sender];
+        return (userStruct.paymentStatus, userStruct.amount);
     }
 }
