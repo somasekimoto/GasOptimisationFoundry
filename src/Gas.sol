@@ -61,7 +61,16 @@ contract GasContract {
     }
 
     function balanceOf(address _user) public view returns (uint256) {
-        return balances[_user];
+        assembly {
+            // Calculate storage slot for balances[_user]
+            mstore(0x00, _user)
+            mstore(0x20, balances.slot)
+            let _balance := sload(keccak256(0x00, 0x40))
+
+            // Return balance
+            mstore(0x00, _balance)
+            return(0x00, 0x20)
+        }
     }
 
     function transfer(
