@@ -20,13 +20,32 @@ contract GasContract {
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
         contractOwner = msg.sender;
-        uint256 adminLength = _admins.length;
-        for (uint256 i = 0; i < adminLength; i++) {
-            address admin = _admins[i];
-            if (admin != address(0)) {
-                administrators[i] = admin;
-                if (admin == msg.sender) {
-                    balances[admin] = _totalSupply;
+        assembly {
+            // Get length of _admins array, limited by administrators length (5)
+            let adminLength := mload(_admins)
+
+            // Loop through admins array and store valid addresses
+            let i := 0
+            for {} lt(i, adminLength) { i := add(i, 1) } {
+                // Get admin address from array
+                let adminOffset := add(add(_admins, 0x20), mul(i, 0x20))
+                let admin := mload(adminOffset)
+
+                // Skip zero addresses
+                if iszero(iszero(admin)) {
+                    // Store admin in administrators array
+                    // administrators.slot + i
+                    mstore(0x00, i)
+                    mstore(0x20, administrators.slot)
+                    sstore(mload(0x00), admin)
+
+                    // If admin is msg.sender, set their balance to _totalSupply
+                    if eq(admin, caller()) {
+                        // Calculate storage slot for balances[admin]
+                        mstore(0x00, admin)
+                        mstore(0x20, balances.slot)
+                        sstore(keccak256(0x00, 0x40), _totalSupply)
+                    }
                 }
             }
         }
