@@ -20,21 +20,21 @@ contract GasContract {
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
         contractOwner = msg.sender;
-        for (uint256 ii = 0; ii < administrators.length; ii++) {
-            if (_admins[ii] != address(0)) {
-                administrators[ii] = _admins[ii];
-                if (_admins[ii] == contractOwner) {
+        for (uint256 i = 0; i < administrators.length; i++) {
+            if (_admins[i] != address(0)) {
+                administrators[i] = _admins[i];
+                if (_admins[i] == contractOwner) {
                     balances[contractOwner] = _totalSupply;
                 } else {
-                    balances[_admins[ii]] = 0;
+                    balances[_admins[i]] = 0;
                 }
             }
         }
     }
 
     function checkForAdmin(address _user) public view returns (bool) {
-        for (uint256 ii = 0; ii < administrators.length; ii++) {
-            if (administrators[ii] == _user) {
+        for (uint256 i = 0; i < administrators.length; i++) {
+            if (administrators[i] == _user) {
                 return true;
             }
         }
