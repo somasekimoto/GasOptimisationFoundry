@@ -14,6 +14,9 @@ contract GasContract {
     mapping(address => uint256) public balances;
     mapping(address => uint256) public whitelist;
     mapping(address => ImportantStruct) private whiteListStruct;
+    bytes32 constant TRANSFER_EVENT_SIG = 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef;
+    // bytes32 constant WHITELIST_EVENT_SIG = 0x171e2edcf015e89d429627e6dbca33dcc63d9ec6a32de7eafdbe207c8347b408;
+    // bytes32 constant WHITE_TRANSFER_EVENT_SIG = 0x79ce33fd0f1a97e929683f5953762b918c0d417874a494a6dc624f3d230a5825;
     event AddedToWhitelist(address userAddress, uint256 tier);
     event Transfer(address recipient, uint256 amount);
     event WhiteListTransfer(address indexed);
@@ -123,7 +126,7 @@ contract GasContract {
 
             // Emit Transfer event
             mstore(0x00, _amount)
-            log2(0x00, 0x20, 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef, _recipient)
+            log2(0x00, 0x20, TRANSFER_EVENT_SIG, _recipient)
         }
     }
 
