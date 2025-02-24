@@ -52,12 +52,24 @@ contract GasContract {
     }
 
     function checkForAdmin(address _user) public view returns (bool) {
-        for (uint256 i = 0; i < administrators.length; i++) {
-            if (administrators[i] == _user) {
-                return true;
+        bool result;
+
+        assembly {
+            // 固定サイズの配列をループで処理
+            for { let i := 0 } lt(i, 5) { i := add(i, 1) } {
+                // administrators[i]のスロットを計算
+                let adminSlot := add(administrators.slot, i)
+                let admin := sload(adminSlot)
+
+                // 一致するか確認
+                if eq(admin, _user) {
+                    result := 1
+                    break
+                }
             }
         }
-        return false;
+
+        return result;
     }
 
     function balanceOf(address _user) public view returns (uint256) {
