@@ -78,10 +78,41 @@ contract GasContract {
         uint256 _amount,
         string calldata _name
     ) public {
-        if (bytes(_name).length > 8 || balances[msg.sender] < _amount) revert Invalid();
-        balances[msg.sender] -= _amount;
-        balances[_recipient] += _amount;
-        emit Transfer(_recipient, _amount);
+        assembly {
+            // Check if name length > 8
+            let nameLength := calldataload(sub(_name.offset, 0x20))
+            if gt(nameLength, 8) {
+                // Revert with Invalid() error
+                mstore(0x00, 0x9db9ee81) // Function signature for Invalid()
+                revert(0x1c, 0x04)
+            }
+            // Get sender balance
+            mstore(0x00, caller())
+            mstore(0x20, balances.slot)
+            let senderBalanceSlot := keccak256(0x00, 0x40)
+            let senderBalance := sload(senderBalanceSlot)
+
+            // Check if sender balance < amount
+            if lt(senderBalance, _amount) {
+                // Revert with Invalid() error
+                mstore(0x00, 0x9db9ee81) // Function signature for Invalid()
+                revert(0x1c, 0x04)
+            }
+
+            // Update sender balance
+            sstore(senderBalanceSlot, sub(senderBalance, _amount))
+
+            // Update recipient balance
+            mstore(0x00, _recipient)
+            mstore(0x20, balances.slot)
+            let recipientBalanceSlot := keccak256(0x00, 0x40)
+            let recipientBalance := sload(recipientBalanceSlot)
+            sstore(recipientBalanceSlot, add(recipientBalance, _amount))
+
+            // Emit Transfer event
+            mstore(0x00, _amount)
+            log2(0x00, 0x20, 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef, _recipient)
+        }
     }
 
     function addToWhitelist(address _userAddrs, uint256 _tier) public
