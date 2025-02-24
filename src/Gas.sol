@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 error Invalid();
 
 contract GasContract {
-    address private contractOwner;
+    address private immutable contractOwner;
     address[5] public administrators;
     struct ImportantStruct {
         uint256 amount;
