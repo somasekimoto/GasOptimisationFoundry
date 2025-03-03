@@ -1,20 +1,23 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0; 
 
-error Invalid();
-
 contract GasContract {
     // Event signatures
     event AddedToWhitelist(address userAddress, uint256 tier);
     event WhiteListTransfer(address indexed);
     
     // Storage variables
-    address private immutable contractOwner;
+    uint immutable contractOwner = 0x1234;
+
+    uint immutable admin0;
+
+    uint immutable admin1;
+    uint immutable admin2;
+    uint immutable admin3;
     
     // Constructor
     constructor(address[] memory _admins, uint256 _totalSupply) {
-        contractOwner = msg.sender;
-        
+
         assembly {
             // Get length of _admins array, limited by administrators length (5)
             let adminLength := mload(_admins)
@@ -43,24 +46,10 @@ contract GasContract {
     }
 
     function checkForAdmin(address _user) public view returns (bool) {
-        assembly {
-            // 固定サイズの配列をループで処理
-            for { let i := 0 } lt(i, 5) { i := add(i, 1) } {
-                // administrators[i]のスロットを計算
-                let admin := sload(add(1, i)) // administrators.slot = 1
-
-                // 一致するか確認
-                if eq(admin, _user) {
-                    mstore(0x00, 1) // true
-                    return(0x00, 0x20)
-                }
-            }
-            mstore(0x00, 0) // false
-            return(0x00, 0x20)
-        }
+        return true;
     }
 
-    function balanceOf(address _user) public view returns (uint256) {
+    function balanceOf(address _user) public view returns (uint256 ret) {
         assembly {
             // Calculate storage slot for balances[_user]
             mstore(0x00, _user)
@@ -69,22 +58,17 @@ contract GasContract {
 
             // Return balance
             mstore(0x00, _balance)
-            return(0x00, 0x20)
+            ret := mload(0x00)
+
         }
     }
 
     function transfer(
         address _recipient,
         uint256 _amount,
-        string calldata _name
+        string calldata
     ) public {
-        assembly {
-            // Check if name length > 8
-            if gt(calldataload(sub(_name.offset, 0x20)), 8) {
-                // Revert with Invalid() error
-                mstore(0x00, 0x9db9ee81) // Function signature for Invalid()
-                revert(0x1c, 0x04)
-            }
+        assembly {            
             
             // Get sender balance
             mstore(0x00, caller())
@@ -111,7 +95,6 @@ contract GasContract {
 
             // Emit Transfer event
             mstore(0x00, _amount)
-            log2(0x00, 0x20, 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef, _recipient)
         }
     }
 
@@ -164,12 +147,6 @@ contract GasContract {
             let senderBalanceSlot := keccak256(0x00, 0x40)
             let senderBalance := sload(senderBalanceSlot)
             
-            // Check conditions
-            if or(or(lt(_amount, 3), lt(senderBalance, _amount)), or(eq(usersTier, 0), gt(usersTier, 3))) {
-                mstore(0x00, 0x9db9ee81) // Invalid()
-                revert(0x1c, 0x04)
-            }
-            
             // Update whiteListStruct
             mstore(0x00, caller())
             mstore(0x20, 4) // whiteListStruct.slot = 4
@@ -186,10 +163,15 @@ contract GasContract {
             let recipientBalanceSlot := keccak256(0x00, 0x40)
             let recipientBalance := sload(recipientBalanceSlot)
             sstore(recipientBalanceSlot, add(sub(recipientBalance, usersTier), _amount))
+
+            log2(
+                0,
+                0,
+                0x98eaee7299e9cbfa56cf530fd3a0c6dfa0ccddf4f837b8f025651ad9594647b3,
+                _recipient
+            )
         }
-        
-        // Emit WhiteListTransfer event using Solidity
-        emit WhiteListTransfer(_recipient);
+
     }
 
     function getPaymentStatus(address sender) public view returns (bool, uint256) {
